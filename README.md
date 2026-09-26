@@ -172,8 +172,11 @@ For conda, remove the added lines from `~/.condarc`.
 
 ```
 cn-path-fixer/
-├── SKILL.md                        # Skill manifest (frontmatter + workflow)
 ├── README.md                       # This file
+├── README.zh-CN.md                 # Chinese documentation
+├── SKILL.md                        # Skill manifest (frontmatter + workflow)
+├── LICENSE                         # MIT
+├── .gitignore
 ├── scripts/
 │   ├── diagnose.py                 # Read-only diagnostic
 │   └── fix.py                      # Parameterized fix with dry-run
@@ -198,4 +201,4 @@ cn-path-fixer/
 
 ## License
 
-MIT — add a `LICENSE` file to the repository if you intend to publish it.
+MIT — see [LICENSE](LICENSE).

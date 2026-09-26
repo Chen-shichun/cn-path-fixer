@@ -2,6 +2,8 @@
 
 > 诊断并修复 Windows 用户名含中文（非 ASCII 字符）导致的开发工具异常。
 
+[English](README.md) | 简体中文
+
 ## 简介
 
 在 Windows 上，如果账户名包含非 ASCII 字符（例如 `C:\Users\张三\`），一大堆开发工具会默认把数据目录放在这个路径下：npm 的全局包和缓存、conda 的虚拟环境与包缓存，以及 cmake、MSVC、node-gyp 等原生构建工具链，也常常从这个路径下被调用。
@@ -166,9 +168,11 @@ conda 则删掉 `~/.condarc` 中新增的那两行即可。
 
 ```
 cn-path-fixer/
-├── SKILL.md                        # Skill 清单（frontmatter + 工作流）
 ├── README.md                       # 英文说明
 ├── README.zh-CN.md                 # 本文件（中文说明）
+├── SKILL.md                        # Skill 清单（frontmatter + 工作流）
+├── LICENSE                         # MIT
+├── .gitignore
 ├── scripts/
 │   ├── diagnose.py                 # 只读诊断
 │   └── fix.py                      # 带 DryRun 的参数化修复
@@ -186,4 +190,4 @@ cn-path-fixer/
 
 ## 许可证
 
-MIT —— 若要正式发布，请自行在仓库中添加 `LICENSE` 文件。
+MIT —— 详见 [LICENSE](LICENSE)。

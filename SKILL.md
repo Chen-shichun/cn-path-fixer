@@ -53,8 +53,9 @@ Run `fix.py` with the managed Python interpreter via the Bash tool. The default 
 "$HOME/.workbuddy/binaries/python/versions/3.13.12/python.exe" "$HOME/.workbuddy/skills/cn-path-fixer/scripts/fix.py" -Tool all -Base "C:\tools"
 ```
 Supported `-Tool` values: `npm`, `conda`, `all`.
-For npm, append `-AddToPath` to also add the new prefix `bin` to the User PATH so globally
-installed CLIs are found.
+For npm, append `-AddToPath` to also add the new prefix directory (`<BASE>\npm`, which is
+where npm puts global CLI shims on Windows) to the User PATH so globally installed CLIs
+are found.
 
 ### Step 4 — Verify
 Re-run `diagnose.py` and confirm the affected paths now resolve to ASCII locations. Tell
