@@ -1,7 +1,6 @@
 ---
 name: cn-path-fixer
-description: 'Diagnose and fix breakage in developer tooling (npm, conda/Anaconda, git, cmake) caused by non-ASCII (e.g. Chinese) characters in the Windows user profile path (e.g. C:\Users\张三\). This skill should be used when the user reports errors such as "path contains non-ASCII characters", garbled npm global install paths, conda environment creation failures under a Chinese Windows account, dubious git ownership on repositories located under a Chinese path, or native build failures in projects placed under a Chinese path. Also use proactively right after the user sets up a new Windows machine with a Chinese account name and installs dev tools.'
-agent_created: true
+description: 'Diagnose and fix Windows developer-tool failures caused by non-ASCII characters in user-profile or build paths. Use for npm or conda path failures, garbled install locations, dubious Git ownership, and native-build encoding errors; do not invoke merely because a Windows account name is non-ASCII when no tooling problem exists.'
 ---
 
 # CN Path Fixer
@@ -30,9 +29,9 @@ only relocates tool cache/package directories to an ASCII location chosen by the
 ## Workflow
 
 ### Step 1 — Diagnose (read-only, safe to run anytime)
-Run with the managed Python interpreter via the Bash tool:
+From the skill directory, use any available Python 3.8+ interpreter:
 ```
-"$HOME/.workbuddy/binaries/python/versions/3.13.12/python.exe" "$HOME/.workbuddy/skills/cn-path-fixer/scripts/diagnose.py"
+python scripts/diagnose.py
 ```
 The script reports, per tool, whether its relevant paths contain non-ASCII characters.
 
@@ -41,16 +40,16 @@ Present a short table: tool → current (problematic) path → status. For each 
 state the fix and its effect. Wait for explicit user confirmation before proceeding.
 
 ### Step 3 — Fix (parameterized, confirmed)
-Run `fix.py` with the managed Python interpreter via the Bash tool. The default base is
+Run `fix.py` from the skill directory. The default base is
 `C:\tools` (pure ASCII, normally writable by a standard user). Override with `-Base` if
 `C:\tools` is not writable or a non-system drive is preferred (e.g. `D:\tools`).
 - Dry run first (shows exactly what will change):
 ```
-"$HOME/.workbuddy/binaries/python/versions/3.13.12/python.exe" "$HOME/.workbuddy/skills/cn-path-fixer/scripts/fix.py" -Tool all -Base "C:\tools" -DryRun
+python scripts/fix.py -Tool all -Base "C:\tools" -DryRun
 ```
 - Apply:
 ```
-"$HOME/.workbuddy/binaries/python/versions/3.13.12/python.exe" "$HOME/.workbuddy/skills/cn-path-fixer/scripts/fix.py" -Tool all -Base "C:\tools"
+python scripts/fix.py -Tool all -Base "C:\tools"
 ```
 Supported `-Tool` values: `npm`, `conda`, `all`.
 For npm, append `-AddToPath` to also add the new prefix directory (`<BASE>\npm`, which is
@@ -64,3 +63,4 @@ the user to open a new terminal so the changed config takes effect.
 ## Reference
 For a catalog of the specific error signatures each tool produces under a Chinese path and
 why they occur, see `references/troubleshooting.md`.
+

@@ -8,9 +8,10 @@ Usage (run with the managed Python interpreter):
 This changes global tool configuration. Always run -DryRun first and confirm
 with the user before applying.
 """
+import argparse
 import os
+import shutil
 import subprocess
-import sys
 
 try:
     import winreg
@@ -35,7 +36,7 @@ def _decode(b):
 
 def run(cmd):
     try:
-        r = subprocess.run(cmd, capture_output=True, shell=True, timeout=60)
+        r = subprocess.run(cmd, capture_output=True, shell=False, timeout=60)
         return _decode(r.stdout).strip()
     except Exception:
         return None
@@ -44,18 +45,14 @@ def run(cmd):
 def run_check(cmd):
     """Run a mutating command; return (returncode, stdout, stderr)."""
     try:
-        r = subprocess.run(cmd, capture_output=True, shell=True, timeout=60)
+        r = subprocess.run(cmd, capture_output=True, shell=False, timeout=60)
         return r.returncode, _decode(r.stdout).strip(), _decode(r.stderr).strip()
     except Exception as e:
         return -1, "", str(e)
 
 
 def which(tool):
-    r = run(f"command -v {tool}")
-    if r and r.strip():
-        return r.strip()
-    r = run(f"where {tool}")
-    return r.strip() if r else None
+    return shutil.which(tool)
 
 
 def ensure_dir(p, dry):
@@ -94,34 +91,29 @@ def set_user_path(val):
         return False
 
 
-def parse_args(argv):
-    tool = "all"
-    base = "C:\\tools"
-    dry = False
-    add_path = False
-    i = 0
-    while i < len(argv):
-        a = argv[i]
-        if a in ("-Tool", "--tool"):
-            tool = argv[i + 1].lower(); i += 2
-        elif a in ("-Base", "--base"):
-            base = argv[i + 1]; i += 2
-        elif a in ("-DryRun", "--dry-run", "-dry"):
-            dry = True; i += 1
-        elif a in ("-AddToPath", "--add-to-path"):
-            add_path = True; i += 1
-        else:
-            i += 1
-    return tool, base, dry, add_path
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Relocate npm or conda data to an ASCII-only Windows path."
+    )
+    parser.add_argument("-Tool", "--tool", choices=("npm", "conda", "all"),
+                        default="all", type=str.lower)
+    parser.add_argument("-Base", "--base", default=r"C:\tools")
+    parser.add_argument("-DryRun", "--dry-run", "-dry", action="store_true")
+    parser.add_argument("-AddToPath", "--add-to-path", action="store_true")
+    return parser.parse_args(argv)
 
 
 def main():
-    tool, base, dry, add_path = parse_args(sys.argv[1:])
+    args = parse_args()
+    tool, base, dry, add_path = args.tool, os.path.normpath(args.base), args.dry_run, args.add_to_path
 
     if non_ascii(base):
         print(f"ERROR: Base path '{base}' contains non-ASCII characters. "
               "Use a pure-ASCII path (e.g. C:\\tools or D:\\tools).")
-        sys.exit(1)
+        raise SystemExit(1)
+    if not os.path.isabs(base) or os.path.dirname(base) == base:
+        print("ERROR: Base must be an absolute subdirectory such as C:\\tools.")
+        raise SystemExit(1)
 
     print(f"===== CN-PATH FIX (Base: {base}, Tool: {tool}, DryRun: {dry}) =====")
 
@@ -137,20 +129,20 @@ def main():
                 print(f"[DRYRUN] npm config set prefix {np}")
                 print(f"[DRYRUN] npm config set cache {nc}")
             else:
-                rc, out, err = run_check(f'npm config set prefix "{np}"')
+                rc, out, err = run_check(["npm", "config", "set", "prefix", np])
                 if rc != 0:
                     print(f"ERROR: failed to set npm prefix: {err or out}")
                 else:
-                    got = run("npm config get prefix")
+                    got = run(["npm", "config", "get", "prefix"])
                     if got and os.path.normpath(got) == os.path.normpath(np):
                         print(f"npm prefix -> {np}  [verified]")
                     else:
                         print(f"WARN: prefix set but readback='{got}' (expected '{np}')")
-                rc, out, err = run_check(f'npm config set cache "{nc}"')
+                rc, out, err = run_check(["npm", "config", "set", "cache", nc])
                 if rc != 0:
                     print(f"ERROR: failed to set npm cache: {err or out}")
                 else:
-                    got = run("npm config get cache")
+                    got = run(["npm", "config", "get", "cache"])
                     if got and os.path.normpath(got) == os.path.normpath(nc):
                         print(f"npm cache  -> {nc}  [verified]")
                     else:
@@ -184,12 +176,12 @@ def main():
                 print(f"[DRYRUN] conda config --add envs_dirs {envs}")
                 print(f"[DRYRUN] conda config --add pkgs_dirs {pkgs}")
             else:
-                rc, out, err = run_check(f'conda config --add envs_dirs "{envs}"')
+                rc, out, err = run_check(["conda", "config", "--add", "envs_dirs", envs])
                 if rc != 0:
                     print(f"ERROR: failed to add conda envs_dirs: {err or out}")
                 else:
                     print(f"conda envs_dirs -> added {envs}  [cmd rc=0]")
-                rc, out, err = run_check(f'conda config --add pkgs_dirs "{pkgs}"')
+                rc, out, err = run_check(["conda", "config", "--add", "pkgs_dirs", pkgs])
                 if rc != 0:
                     print(f"ERROR: failed to add conda pkgs_dirs: {err or out}")
                 else:
@@ -200,3 +192,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
